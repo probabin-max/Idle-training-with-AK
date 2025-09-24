@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Холостая Тренировка с АК</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is structured as a sequential, educational guide. It starts with a non-skippable, high-visibility safety section. The user then progresses to preparation, followed by a core interactive module of tab-based navigation for different drills (stance, grip, sights, etc.). This task-oriented structure allows users to focus on one skill at a time. It concludes with an engagement-focused interactive training log and a new, dynamic scenario generator to add variety and challenge. This structure was chosen because it mirrors a safe and logical training progression, prioritizing safety first and then breaking down complex actions into manageable, explorable steps for better learning and retention, while also providing a personalized, dynamic element with the LLM integration. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Safety Rules -> Goal: Inform/Emphasize -> Presentation: High-contrast text block with icons (Unicode) -> Interaction: None, static visibility -> Justification: Critical information must be immediately visible and clear.
+        - Report Info: Preparation Steps -> Goal: Organize/Instruct -> Presentation: Styled checklist (HTML/CSS) -> Interaction: Clickable items to toggle state -> Justification: Provides a clear, actionable sequence for the user to follow.
+        - Report Info: Core Drills (Stance, Grip, Sights, Trigger, Reload) -> Goal: Organize/Instruct -> Presentation: Tabbed interface with descriptive text and CSS diagrams -> Interaction: Clicking tabs to reveal content -> Justification: Prevents information overload by segmenting drills into focused topics. The CSS diagrams provide simple, clear visual aids without complex graphics.
+        - Report Info: Training Consistency -> Goal: Engage/Motivate -> Presentation: Bar Chart (Chart.js/Canvas) -> Interaction: Input fields update the chart dynamically -> Justification: Transforms a static guide into a personal tool, encouraging regular practice and providing visual feedback on progress.
+        - Report Info: Scenario Practice -> Goal: Engage/Challenge -> Presentation: Dynamically generated text from LLM -> Interaction: Button click to generate new content -> Justification: Adds a powerful, creative, and highly interactive element that extends the app's utility beyond a simple guide, making training more diverse and realistic.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #FDFBF5;
+            color: #333333;
+        }
+        .tab-button.active {
+            background-color: #556B2F;
+            color: #FDFBF5;
+            border-color: #556B2F;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .checklist-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .checklist-item.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .checklist-item.completed .checkbox-icon {
+            background-color: #556B2F;
+            border-color: #556B2F;
+        }
+        .checklist-item.completed .checkbox-icon::after {
+            opacity: 1;
+        }
+        .checkbox-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.2s ease-in-out;
+        }
+        .checkbox-icon::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-[#333333] text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold">Интерактивное Руководство</h1>
+            <p class="text-lg">Холостая тренировка с автоматом Калашникова</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <section id="safety" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-lg shadow-lg mb-12">
+            <h2 class="text-2xl font-bold mb-4">🛑 ВНИМАНИЕ! Безопасность — абсолютный приоритет!</h2>
+            <p class="mb-2">Холостая тренировка проводится **ИСКЛЮЧИТЕЛЬНО** с разряженным и проверенным оружием. Неукоснительно соблюдайте следующие правила:</p>
+            <ul class="list-disc list-inside space-y-2 font-semibold">
+                <li>Правило №1: Я всегда буду обращаться с оружием как с заряженным.</li>
+                <li>Правило №2: Я никогда не направлю оружие туда, куда я не готов выстрелить.</li>
+                <li>Правило №3: Мой палец всегда будет находиться за пределами спусковой скобы, пока я не приму решение произвести выстрел.</li>
+                <li>Правило №4: Я всегда буду уверен в своей цели и в том, что находится за ней.</li>
+            </ul>
+        </section>
+
+        <section id="preparation" class="bg-white p-8 rounded-lg shadow-lg mb-12 border border-gray-200">
+            <h2 class="text-2xl font-bold mb-6 text-center">Этап Подготовки</h2>
+            <p class="text-center text-gray-600 mb-8">Перед началом каждой тренировки необходимо выполнить следующие шаги. Этот ритуал обеспечивает вашу безопасность и безопасность окружающих.</p>
+            <div id="preparation-checklist" class="space-y-4 max-w-2xl mx-auto">
+                <div class="checklist-item flex items-center p-4 rounded-lg bg-gray-50 border cursor-pointer hover:bg-gray-100">
+                    <div class="checkbox-icon mr-4 flex-shrink-0"></div>
+                    <div>
+                        <h3 class="font-semibold text-lg">1. Выбор безопасного места</h3>
+                        <p class="text-gray-600">Выберите помещение, где нет других людей. Убедитесь, что стена, в направлении которой вы будете работать, является безопасной (капитальная, бетонная) и за ней нет людей или ценных предметов.</p>
+                    </div>
+                </div>
+                <div class="checklist-item flex items-center p-4 rounded-lg bg-gray-50 border cursor-pointer hover:bg-gray-100">
+                    <div class="checkbox-icon mr-4 flex-shrink-0"></div>
+                    <div>
+                        <h3 class="font-semibold text-lg">2. Устранение отвлекающих факторов</h3>
+                        <p class="text-gray-600">Отключите телефон, телевизор и другие источники отвлечения. Полностью сконцентрируйтесь на тренировке.</p>
+                    </div>
+                </div>
+                <div class="checklist-item flex items-center p-4 rounded-lg bg-gray-50 border cursor-pointer hover:bg-gray-100">
+                    <div class="checkbox-icon mr-4 flex-shrink-0"></div>
+                    <div>
+                        <h3 class="font-semibold text-lg">3. Полное отсутствие боеприпасов</h3>
+                        <p class="text-gray-600">Уберите **ВСЕ** боеприпасы, включая снаряженные магазины, в другое помещение. В зоне тренировки не должно быть ни одного патрона.</p>
+                    </div>
+                </div>
+                <div class="checklist-item flex items-center p-4 rounded-lg bg-gray-50 border cursor-pointer hover:bg-gray-100">
+                    <div class="checkbox-icon mr-4 flex-shrink-0"></div>
+                    <div>
+                        <h3 class="font-semibold text-lg">4. Проверка оружия (Контрольный осмотр)</h3>
+                        <p class="text-gray-600">Выполните полную процедуру проверки оружия: отсоедините магазин, снимите с предохранителя, отведите затворную раму назад, осмотрите патронник визуально и на ощупь. Произведите контрольный спуск в безопасном направлении.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="drills" class="bg-white p-8 rounded-lg shadow-lg mb-12 border border-gray-200">
+            <h2 class="text-2xl font-bold mb-2 text-center">Основные Упражнения</h2>
+            <p class="text-center text-gray-600 mb-8">Выберите упражнение для просмотра детальной инструкции. Последовательная отработка этих элементов — ключ к формированию мышечной памяти.</p>
+            <div class="flex flex-wrap justify-center border-b-2 border-gray-200 mb-8" id="tabs-container">
+                <button class="tab-button text-lg font-medium py-3 px-6 border-b-4 border-transparent hover:bg-gray-100" data-tab="stance">Стойка</button>
+                <button class="tab-button text-lg font-medium py-3 px-6 border-b-4 border-transparent hover:bg-gray-100" data-tab="grip">Хват</button>
+                <button class="tab-button text-lg font-medium py-3 px-6 border-b-4 border-transparent hover:bg-gray-100" data-tab="sights">Прицеливание</button>
+                <button class="tab-button text-lg font-medium py-3 px-6 border-b-4 border-transparent hover:bg-gray-100" data-tab="trigger">Обработка спуска</button>
+                <button class="tab-button text-lg font-medium py-3 px-6 border-b-4 border-transparent hover:bg-gray-100" data-tab="reload">Перезарядка</button>
+            </div>
+
+            <div id="tab-content">
+                <div id="stance-content" class="content-section">
+                    <h3 class="text-xl font-semibold mb-4">Изготовка к стрельбе (Стойка)</h3>
+                    <p class="mb-4">Правильная стойка обеспечивает стабильность оружия и эффективное поглощение отдачи. Она должна быть агрессивной и направленной к цели.</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>Ноги:</strong> На ширине плеч или чуть шире. Ведущая нога (противоположная стреляющей руке) немного впереди.</li>
+                        <li><strong>Колени:</strong> Слегка согнуты, чтобы амортизировать и быть готовым к движению.</li>
+                        <li><strong>Корпус:</strong> Небольшой наклон вперед, от таза. Вес тела смещен на переднюю часть стоп.</li>
+                        <li><strong>Плечи:</strong> Расслаблены, но сильное плечо плотно вложено в приклад.</li>
+                        <li><strong>Голова:</strong> Прямо, не наклоняется к прикладу. Приклад подносится к щеке.</li>
+                    </ul>
+                </div>
+                <div id="grip-content" class="content-section">
+                    <h3 class="text-xl font-semibold mb-4">Хват оружия</h3>
+                    <p class="mb-4">Надежный и правильный хват контролирует оружие во время и после выстрела.</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>Стреляющая рука:</strong> Плотно охватывает пистолетную рукоятку. Указательный палец лежит вдоль ствольной коробки, вне спусковой скобы.</li>
+                        <li><strong>Поддерживающая рука:</strong> Крепко охватывает цевье как можно дальше от себя. Это создает длинный рычаг для лучшего контроля. Большой палец может лежать сверху или сбоку цевья.</li>
+                        <li><strong>Вкладка в плечо:</strong> Приклад должен плотно и однообразно упираться в плечевую впадину. Это критически важно для контроля отдачи и стабильности.</li>
+                    </ul>
+                </div>
+                <div id="sights-content" class="content-section">
+                    <h3 class="text-xl font-semibold mb-4">Прицеливание и картина прицеливания</h3>
+                    <p class="mb-4">Задача — выровнять мушку относительно целика и навести их на цель.</p>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                        <div class="text-center">
+                            <h4 class="font-semibold mb-2">Правильная картина</h4>
+                            <div class="relative w-48 h-24 bg-gray-100 border-2 border-gray-400 rounded flex items-center justify-center">
+                                <div class="absolute bottom-0 w-12 h-10 border-t-8 border-x-8 border-transparent border-t-gray-700"></div>
+                                <div class="absolute bottom-0 w-2 h-10 bg-gray-700"></div>
+                            </div>
+                            <p class="mt-2 text-sm">"Ровная мушка": вершина мушки на одном уровне с краями гривки прицельной планки.</p>
+                        </div>
+                        <ul class="list-disc list-inside space-y-2 md:w-1/2">
+                           <li><strong>Фокус зрения:</strong> Ваше зрение должно быть четко сфокусировано на мушке. Целик и цель будут слегка размыты. Это самый важный аспект прицеливания.</li>
+                           <li><strong>Выравнивание:
+                        </strong> Мушка должна находиться ровно по центру прорези целика.</li>
+                           <li><strong>Точка прицеливания:</strong> Выровненные прицельные приспособления наводятся на точку на цели, в которую вы хотите попасть.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="trigger-content" class="content-section">
+                    <h3 class="text-xl font-semibold mb-4">Плавная обработка спускового крючка</h3>
+                    <p class="mb-4">Нажатие на спуск — самое деликатное действие. Его нужно выполнить так, чтобы не нарушить картину прицеливания.</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>Положение пальца:</strong> Используйте первую фалангу указательного пальца.</li>
+                        <li><strong>Движение:</strong> Нажатие должно быть плавным, равномерным и направленным строго назад, параллельно оси ствола.</li>
+                        <li><strong>Изоляция:</strong> Только указательный палец должен двигаться. Вся остальная кисть и рука остаются неподвижными.</li>
+                        <li><strong>"Сюрприз":</strong> Спуск курка должен быть в некоторой степени неожиданным. Не пытайтесь "поймать" момент выстрела.</li>
+                        <li><strong>Удержание после спуска:</strong> После щелчка УСМ, не отпускайте спусковой крючок сразу. Это помогает выработать привычку не "дергать" оружие.</li>
+                    </ul>
+                </div>
+                <div id="reload-content" class="content-section">
+                    <h3 class="text-xl font-semibold mb-4">Экстренная перезарядка</h3>
+                    <p class="mb-4">Отработка смены магазина до автоматизма экономит драгоценные секунды.</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><strong>Шаг 1:</strong> Удерживая оружие на линии прицеливания, поддерживающей рукой возьмите новый магазин из подсумка.</li>
+                        <li><strong>Шаг 2:</strong> Поднесите новый магазин к автомату. Большим пальцем поддерживающей руки нажмите на защелку магазина.</li>
+                        <li><strong>Шаг 3:</strong> Одновременным движением сбросьте пустой магазин и начните установку нового.</li>
+                        <li><strong>Шаг 4:</strong> Вставьте новый магазин, зацепив его передней частью за выступ в ствольной коробке и затем защелкнув заднюю часть ("качающееся" движение).</li>
+                        <li><strong>Шаг 5:</strong> Убедитесь, что магазин надежно зафиксирован, слегка дернув его.</li>
+                        <li><strong>Шаг 6:</strong> Если оружие было на затворной задержке (в АК нет, но имитируем "пустой" затвор), передерните затвор. Восстановите прицельную картину.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section id="scenario" class="bg-white p-8 rounded-lg shadow-lg mb-12 border border-gray-200">
+            <h2 class="text-2xl font-bold mb-2 text-center">Генератор Сценариев Тренировок ✨</h2>
+            <p class="text-center text-gray-600 mb-8">Нажмите кнопку, чтобы получить уникальный сценарий холостой тренировки, который поможет вам отработать навыки в реалистичной ситуации.</p>
+            <div class="flex flex-col items-center max-w-2xl mx-auto">
+                <button id="generate-scenario-btn" class="bg-[#556B2F] text-white py-3 px-6 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#556B2F] transition-colors font-bold text-lg mb-6">
+                    Сгенерировать сценарий тренировки ✨
+                </button>
+                <div id="scenario-output" class="text-gray-800 bg-gray-100 p-6 rounded-lg shadow-inner w-full min-h-[150px] flex items-center justify-center text-center italic">
+                    <p>Сгенерированный сценарий появится здесь.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="training-log" class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+            <h2 class="text-2xl font-bold mb-2 text-center">Журнал Тренировок</h2>
+            <p class="text-center text-gray-600 mb-8">Отслеживайте свой прогресс. Записывайте количество повторений (например, вскидок или перезарядок) за тренировку, чтобы видеть динамику.</p>
+            <div class="chart-container mb-8">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                <div>
+                    <label for="drill-select" class="block text-sm font-medium text-gray-700">Упражнение</label>
+                    <select id="drill-select" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#556B2F] focus:border-[#556B2F]">
+                        <option value="0">Вскидка и прицеливание</option>
+                        <option value="1">Обработка спуска</option>
+                        <option value="2">Перезарядка</option>
+                        <option value="3">Перенос огня</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="reps-input" class="block text-sm font-medium text-gray-700">Количество повторений</label>
+                    <input type="number" id="reps-input" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#556B2F] focus:border-[#556B2F]" placeholder="50">
+                </div>
+                <div class="flex items-end">
+                    <button id="add-data-btn" class="w-full bg-[#556B2F] text-white py-2 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#556B2F] transition-colors">Добавить данные</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-[#333333] text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Интерактивное Руководство. Тренируйтесь безопасно и регулярно.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabsContainer = document.getElementById('tabs-container');
+            const tabContent = document.getElementById('tab-content');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-button');
+            const contentSections = tabContent.querySelectorAll('.content-section');
+
+            function showTab(tabName) {
+                tabButtons.forEach(button => {
+                    if (button.dataset.tab === tabName) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                });
+
+                contentSections.forEach(section => {
+                    if (section.id === `${tabName}-content`) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            }
+
+            tabsContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('tab-button')) {
+                    const tabName = event.target.dataset.tab;
+                    showTab(tabName);
+                }
+            });
+
+            showTab('stance');
+            
+            const checklistItems = document.querySelectorAll('.checklist-item');
+            checklistItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('completed');
+                });
+            });
+
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const chartLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            const chartData = {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Вскидка и прицеливание',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(85, 107, 47, 0.6)',
+                        borderColor: 'rgba(85, 107, 47, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Обработка спуска',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(139, 69, 19, 0.6)',
+                        borderColor: 'rgba(139, 69, 19, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Перезарядка',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(128, 128, 128, 0.6)',
+                        borderColor: 'rgba(128, 128, 128, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Перенос огня',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(189, 183, 107, 0.6)',
+                        borderColor: 'rgba(189, 183, 107, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            };
+            
+            const chartConfig = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Количество повторений'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' раз';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const progressChart = new Chart(ctx, chartConfig);
+
+            const addDataBtn = document.getElementById('add-data-btn');
+            const drillSelect = document.getElementById('drill-select');
+            const repsInput = document.getElementById('reps-input');
+
+            addDataBtn.addEventListener('click', () => {
+                const drillIndex = parseInt(drillSelect.value, 10);
+                const reps = parseInt(repsInput.value, 10);
+                
+                if (!isNaN(reps) && reps > 0) {
+                    const dayIndex = new Date().getDay();
+                    const adjustedDayIndex = (dayIndex === 0) ? 6 : dayIndex - 1;
+
+                    progressChart.data.datasets[drillIndex].data[adjustedDayIndex] += reps;
+                    progressChart.update();
+                    repsInput.value = '';
+                } else {
+                    alert('Пожалуйста, введите корректное количество повторений.');
+                }
+            });
+
+            const generateScenarioBtn = document.getElementById('generate-scenario-btn');
+            const scenarioOutput = document.getElementById('scenario-output');
+
+            const generateScenario = async () => {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const systemPrompt = "Вы — опытный инструктор по тактической подготовке. Ваша задача — сгенерировать короткий, реалистичный и последовательный сценарий холостой тренировки для автомата Калашникова, фокусируясь на конкретных действиях и условиях. Сценарий должен быть без вступительных и заключительных фраз, только сам текст, разделенный на параграфы.";
+                const userQuery = "Создай сценарий холостой тренировки с АК для отработки навыков. Включи в него движения, смену магазинов и смену положения для стрельбы.";
+
+                scenarioOutput.innerHTML = `<div class="flex items-center justify-center">
+                                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                                <p class="ml-3 text-gray-900">Генерация сценария...</p>
+                                            </div>`;
+                generateScenarioBtn.disabled = true;
+
+                try {
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                    };
+
+                    let response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error('API request failed');
+
+                    let result = await response.json();
+                    let generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (generatedText) {
+                        const formattedText = generatedText.replace(/\n/g, '<br><br>');
+                        scenarioOutput.innerHTML = `<p class="text-left font-normal italic">${formattedText}</p>`;
+                    } else {
+                        throw new Error('No content generated');
+                    }
+                } catch (error) {
+                    scenarioOutput.innerHTML = `<p class="text-red-500">Ошибка при генерации сценария. Пожалуйста, попробуйте снова.</p>`;
+                    console.error('Gemini API Error:', error);
+                } finally {
+                    generateScenarioBtn.disabled = false;
+                }
+            };
+
+            generateScenarioBtn.addEventListener('click', generateScenario);
+        });
+    </script>
+</body>
+</html>
